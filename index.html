@@ -211,12 +211,20 @@
         ctx.fillRect(0, 0, pxW, pxH);
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 60px "Sarabun", sans-serif';
+
+        // ปรับขนาดตัวอักษรตามความกว้างของแต่ละหน้าปริซึม
+        // เพื่อให้คำว่า “ผิวข้าง” อยู่กึ่งกลางและไม่ล้นออกนอกหน้า
+        const fontSize = Math.min(60, Math.max(34, pxW * 0.13));
+        ctx.font = `bold ${fontSize}px "Sarabun", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+
+        // วางข้อความที่จุดกึ่งกลางของ Texture อย่างแท้จริง
         ctx.fillText('ผิวข้าง', pxW / 2, pxH / 2);
-        
-        return new THREE.CanvasTexture(canvas);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        return texture;
     }
     
     function createBaseTexture() {
