@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>สื่ออินเทอร์แอกทีฟ: รูปคลี่ปริซึม</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background-color: #f4f7f6;
+      overflow: hidden;
+      touch-action: none;
+    }
+    
+    #header {
+      position: relative;
+      padding: 10px; /* ลดขนาด padding */
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px; /* ลดระยะห่าง */
+    }
+    h2 { margin: 0; color: #2c3e50; font-size: 1.1rem; text-align: center; }
+    
+    .controls {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-width: 950px;
+    }
+    
+    button {
+      padding: 6px 10px; /* ลดขนาดปุ่ม */
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background: #34495e;
+      color: white;
+      font-size: 13px; /* ลดขนาดฟอนต์ */
+      font-family: inherit;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover { background: #2c3e50; }
+    button:active { transform: scale(0.95); }
+    button.active { background: #e74c3c; box-shadow: 0 0 6px rgba(231, 76, 60, 0.5); }
+    
+    button.action-btn { background: #27ae60; font-weight: bold; }
+    button.action-btn:hover { background: #219150; }
+    
+    .divider { width: 100%; height: 1px; background: #eee; margin: 4px 0; }
+    
+    @media (min-width: 768px) {
+      h2 { font-size: 1.3rem; }
+      button { padding: 8px 14px; font-size: 14px; }
+      .divider { width: 2px; height: 24px; margin: 0 8px; background: #ccc; }
+      .controls { flex-wrap: nowrap; }
+    }
+    
+    #canvas-container {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 44px;
+      width: 100%;
+      overflow: hidden;
+    }
+    canvas { display: block; outline: none; }
+    
+    #footer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+
+      width: 100%;
+      height: 44px;
+      box-sizing: border-box;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 6px 10px;
+
+      background: white;
+      color: #555;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.3;
+
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.12);
+
+      z-index: 99999;
+
+      visibility: visible;
+      opacity: 1;
+    }
+
+    @media (max-width: 767px) {
+      #footer {
+        height: 42px;
+        font-size: 12px;
+        padding:
+          5px 8px
+          calc(5px + env(safe-area-inset-bottom));
+      }
+
+      #canvas-container {
+        bottom: 42px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="header">
+    <h2>สื่อจำลองรูปคลี่ปริซึม</h2>
+    <div class="controls">
+       <button onclick="changeShape(3)" id="btn-3">ปริซึมสามเหลี่ยมด้านเท่า</button>
+       <button onclick="changeShape(4)" id="btn-4" class="active">ปริซึมสี่เหลี่ยมผืนผ้า</button>
+       <button onclick="changeShape(5)" id="btn-5">ปริซึมห้าเหลี่ยมด้านเท่า</button>
+       <button onclick="changeShape(6)" id="btn-6">ปริซึมหกเหลี่ยมด้านเท่า</button>
+       
+       <div class="divider"></div>
+       
+       <button class="action-btn" onclick="setFold(true)">📦 ประกอบปริซึม</button>
+       <button class="action-btn" onclick="setFold(false)">✂️ คลี่ปริซึม</button>
+    </div>
+  </div>
+
+  <div id="canvas-container"></div>
+  
+  <div id="footer">
+    พัฒนาสื่อโดย✨คุณครูพิมพ์ชนก พวงพี่✨
+  </div>
+
+  <!-- นำเข้า Three.js และ OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    let scene, camera, renderer, controls;
+    let prismGroup = new THREE.Group();
+    
+    let currentSides = 4;
+    let animProgress = 1.0; 
+    let targetProgress = 1.0;
+    
+    let currentWidths = [];
+    const H = 6.5; 
+    
+    let latFaces = [];
+    let topBaseMesh, bottomBaseMesh;
+
+    init();
+    
+    function init() {
+       const container = document.getElementById('canvas-container');
+       
+       scene = new THREE.Scene();
+       scene.background = new THREE.Color(0xf4f7f6);
+       
+       camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+       camera.position.set(0, 6, 22);
+       
+       renderer = new THREE.WebGLRenderer({ antialias: true });
+       renderer.setSize(container.clientWidth, container.clientHeight);
+       renderer.setPixelRatio(window.devicePixelRatio); 
+       container.appendChild(renderer.domElement);
+       
+       controls = new THREE.OrbitControls(camera, renderer.domElement);
+       controls.enableDamping = true;
+       controls.enablePan = false;
+       
+       const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+       scene.add(ambientLight);
+       const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
+       dirLight.position.set(10, 20, 15);
+       scene.add(dirLight);
+       
+       scene.add(prismGroup);
+       
+       buildPrism(currentSides);
+       
+       window.addEventListener('resize', onWindowResize);
+       animate();
+    }
+
+    function createLatTexture(w, h) {
+        const canvas = document.createElement('canvas');
+        const pxW = Math.round(w * 100);
+        const pxH = Math.round(h * 100);
+        canvas.width = pxW; canvas.height = pxH;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#4298d5';
+        ctx.fillRect(0, 0, pxW, pxH);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 60px "Sarabun", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ผิวข้าง', pxW / 2, pxH / 2);
+        
+        return new THREE.CanvasTexture(canvas);
+    }
+    
+    function createBaseTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0)'; 
+        ctx.fillRect(0, 0, 512, 512);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 110px "Sarabun", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ฐาน', 256, 256);
+        
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    function buildPrism(sides) {
+       while(prismGroup.children.length > 0){ 
+           prismGroup.remove(prismGroup.children[0]); 
+       }
+       latFaces = [];
+       currentWidths = [];
+       
+       if (sides === 4) {
+           currentWidths = [4.5, 2.5, 4.5, 2.5]; 
+       } else {
+           for(let i=0; i<sides; i++) currentWidths.push(3.5); 
+       }
+       
+       const baseMat = new THREE.MeshLambertMaterial({ color: 0xf39c12, side: THREE.DoubleSide });
+       const edgeMat = new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.25, gapSize: 0.15 });
+       
+       const baseTextTex = createBaseTexture();
+       const baseTextMat = new THREE.MeshBasicMaterial({ map: baseTextTex, transparent: true, side: THREE.DoubleSide });
+       
+       let parent = prismGroup;
+       
+       for(let i=0; i<sides; i++) {
+           const currentW = currentWidths[i];
+           const latTex = createLatTexture(currentW, H);
+           const latMat = new THREE.MeshLambertMaterial({ map: latTex, side: THREE.DoubleSide });
+           
+           const geo = new THREE.PlaneGeometry(currentW, H);
+           geo.translate(currentW/2, 0, 0); 
+           const mesh = new THREE.Mesh(geo, latMat);
+           
+           const edges = new THREE.EdgesGeometry(geo);
+           const line = new THREE.LineSegments(edges, edgeMat);
+           line.computeLineDistances(); 
+           mesh.add(line);
+           
+           if(i === 0) {
+               parent.add(mesh);
+           } else {
+               mesh.position.x = currentWidths[i-1]; 
+               parent.add(mesh);
+           }
+           latFaces.push(mesh);
+           parent = mesh; 
+       }
+       
+       const shape = new THREE.Shape();
+       let angle = 0;
+       const extAngle = Math.PI * 2 / sides;
+       shape.moveTo(0, 0);
+       let px = 0, py = 0;
+       for(let i=1; i<sides; i++) {
+           px += currentWidths[i-1] * Math.cos(angle);
+           py += currentWidths[i-1] * Math.sin(angle);
+           shape.lineTo(px, py);
+           angle += extAngle;
+       }
+       const baseGeo = new THREE.ShapeGeometry(shape);
+       
+       let centerY;
+       if (sides === 4) {
+           centerY = currentWidths[1] / 2; 
+       } else {
+           centerY = currentWidths[0] / (2 * Math.tan(Math.PI / sides)); 
+       }
+       
+       topBaseMesh = new THREE.Mesh(baseGeo, baseMat);
+       topBaseMesh.position.set(0, H/2, 0);
+       
+       const topEdges = new THREE.EdgesGeometry(baseGeo);
+       const topLine = new THREE.LineSegments(topEdges, edgeMat);
+       topLine.computeLineDistances();
+       topBaseMesh.add(topLine);
+       
+       const textPlaneSize = Math.min(currentWidths[0], centerY * 2) * 0.7;
+       const textMeshTop = new THREE.Mesh(new THREE.PlaneGeometry(textPlaneSize, textPlaneSize), baseTextMat);
+       textMeshTop.position.set(currentWidths[0]/2, centerY, 0.05);
+       topBaseMesh.add(textMeshTop);
+       
+       latFaces[0].add(topBaseMesh);
+       
+       bottomBaseMesh = new THREE.Mesh(baseGeo, baseMat);
+       bottomBaseMesh.position.set(0, -H/2, 0);
+       
+       const botEdges = new THREE.EdgesGeometry(baseGeo);
+       const botLine = new THREE.LineSegments(botEdges, edgeMat);
+       botLine.computeLineDistances();
+       bottomBaseMesh.add(botLine);
+       
+       const textMeshBot = textMeshTop.clone();
+       textMeshBot.rotation.x = Math.PI; 
+       textMeshBot.position.z = -0.05;
+       bottomBaseMesh.add(textMeshBot);
+       
+       latFaces[0].add(bottomBaseMesh);
+    }
+
+    function changeShape(sides) {
+      currentSides = sides;
+      document.getElementById('btn-3').classList.remove('active');
+      document.getElementById('btn-4').classList.remove('active');
+      document.getElementById('btn-5').classList.remove('active');
+      document.getElementById('btn-6').classList.remove('active');
+      document.getElementById('btn-'+sides).classList.add('active');
+      buildPrism(currentSides);
+    }
+
+    function setFold(isFolded) {
+      targetProgress = isFolded ? 1.0 : 0.0;
+    }
+
+    function onWindowResize() {
+      const container = document.getElementById('canvas-container');
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function animate() {
+       requestAnimationFrame(animate);
+       
+       animProgress += (targetProgress - animProgress) * 0.05;
+       
+       const totalWidth = currentWidths.reduce((a, b) => a + b, 0);
+       prismGroup.position.x = -(currentWidths[0]/2 + (totalWidth/2 - currentWidths[0]/2) * (1 - animProgress));
+       
+       const foldAngle = (Math.PI * 2) / currentSides;
+       for(let i=1; i<latFaces.length; i++) {
+           latFaces[i].rotation.y = foldAngle * animProgress;
+       }
+       
+       topBaseMesh.rotation.x = -(Math.PI / 2) * animProgress;
+       bottomBaseMesh.rotation.x = Math.PI + (Math.PI / 2) * animProgress;
+       
+       controls.update();
+       renderer.render(scene, camera);
+    }
+  </script>
+</body>
+</html>
