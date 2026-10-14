@@ -18,57 +18,79 @@
       overflow: hidden;
       touch-action: none;
     }
-    
+
     #header {
       position: relative;
-      padding: 10px; /* ลดขนาด padding */
+      padding: 5px 8px;
       background: white;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px; /* ลดระยะห่าง */
+      gap: 4px;
     }
-    h2 { margin: 0; color: #2c3e50; font-size: 1.1rem; text-align: center; }
-    
+    h2 { margin: 0; color: #2c3e50; font-size: 0.95rem; text-align: center; }
+    .ctl-label { font-size: 12px; color: #7f8c8d; white-space: nowrap; }
+
     .controls {
       display: flex;
-      gap: 6px;
+      gap: 4px;
       flex-wrap: wrap;
       justify-content: center;
       align-items: center;
       width: 100%;
-      max-width: 950px;
+      max-width: 1100px;
     }
-    
+
     button {
-      padding: 6px 10px; /* ลดขนาดปุ่ม */
+      padding: 4px 8px;
       cursor: pointer;
       border: none;
       border-radius: 6px;
       background: #34495e;
       color: white;
-      font-size: 13px; /* ลดขนาดฟอนต์ */
+      font-size: 12px;
       font-family: inherit;
+      white-space: nowrap;
       transition: background 0.2s, transform 0.1s;
     }
     button:hover { background: #2c3e50; }
     button:active { transform: scale(0.95); }
     button.active { background: #e74c3c; box-shadow: 0 0 6px rgba(231, 76, 60, 0.5); }
-    
+
     button.action-btn { background: #27ae60; font-weight: bold; }
     button.action-btn:hover { background: #219150; }
-    
-    .divider { width: 100%; height: 1px; background: #eee; margin: 4px 0; }
-    
+
+    .divider { width: 2px; height: 20px; margin: 0 4px; background: #ccc; }
+
     @media (min-width: 768px) {
-      h2 { font-size: 1.3rem; }
-      button { padding: 8px 14px; font-size: 14px; }
-      .divider { width: 2px; height: 24px; margin: 0 8px; background: #ccc; }
-      .controls { flex-wrap: nowrap; }
+      h2 { font-size: 1.05rem; }
+      button { padding: 5px 10px; font-size: 13px; }
+      .ctl-label { font-size: 13px; }
     }
-    
+
+    @media (min-width: 768px) and (max-width: 1150px) {
+      .ctl-label { display: none; }
+      button { padding: 4px 7px; font-size: 12px; }
+    }
+
+    /* มือถือ: ปุ่มเรียงแถวเดียว เลื่อนซ้ายขวาได้ ไม่กินพื้นที่แนวตั้ง */
+    @media (max-width: 767px) {
+      .controls {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+        padding-bottom: 2px;
+      }
+      .controls .action-btn { order: -2; }   /* ปุ่มประกอบ/คลี่ อยู่หน้าสุด เห็นได้ทันที */
+      .controls .divider { order: -1; }
+      .controls::-webkit-scrollbar { height: 3px; }
+      .controls::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    }
+
     #canvas-container {
       position: absolute;
       left: 0;
@@ -79,38 +101,155 @@
       overflow: hidden;
     }
     canvas { display: block; outline: none; }
-    
+
     #footer {
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
-
       width: 100%;
       height: 44px;
       box-sizing: border-box;
-
       display: flex;
       align-items: center;
       justify-content: center;
-
       padding: 6px 10px;
-
       background: white;
       color: #555;
       text-align: center;
       font-size: 14px;
       line-height: 1.3;
-
       box-shadow: 0 -2px 8px rgba(0,0,0,0.12);
-
       z-index: 99999;
-
       visibility: visible;
       opacity: 1;
     }
 
+    /* ===== แผงขนาดและวิธีคิด ===== */
+    #panel {
+      position: fixed;
+      left: 10px;
+      bottom: 54px;
+      width: 360px;
+      max-width: calc(100% - 20px);
+      max-height: calc(100% - 200px);
+      overflow-y: auto;
+      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.97);
+      border-radius: 10px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      z-index: 20;
+      font-size: 15px;
+      color: #2c3e50;
+      touch-action: auto;
+    }
+    #panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #34495e;
+      color: white;
+      border-radius: 10px 10px 0 0;
+      cursor: pointer;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+    }
+    #panel.collapsed #panel-body { display: none; }
+    #panel.collapsed #panel-head { border-radius: 10px; }
+    #panel-body { padding: 10px 12px 12px; }
+    .section { margin-bottom: 10px; }
+    .section-title { font-weight: bold; margin-bottom: 6px; color: #34495e; }
+    .dim-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .dim-row input[type=number] {
+      width: 70px;
+      padding: 4px 6px;
+      font-family: inherit;
+      font-size: 15px;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .dim-row .unit { min-width: 30px; }
+    .note { font-size: 13px; color: #7f8c8d; }
+    .warn { font-size: 13px; color: #c0392b; }
+    .btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+    .btn-row button { font-size: 13px; padding: 6px 10px; }
+    ol.steps { margin: 4px 0 0; padding-left: 20px; }
+    ol.steps li { margin-bottom: 4px; line-height: 1.45; }
+    ol.steps li.hidden { color: transparent; background: #ecf0f1; border-radius: 4px; user-select: none; }
+    .check-list { list-style: none; margin: 6px 0 0; padding: 0; }
+    .check-list li { margin-bottom: 3px; }
+    .ok { color: #27ae60; font-weight: bold; }
+    .bad { color: #c0392b; font-weight: bold; }
+    .verdict { margin-top: 6px; padding: 6px 8px; border-radius: 6px; text-align: center; font-weight: bold; }
+    .verdict.pass { background: #eafaf1; color: #1e8449; }
+    .verdict.fail { background: #fdedec; color: #c0392b; }
+    .small-input { width: 56px !important; }
+    label.toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; margin-bottom: 4px; }
+
+    /* ===== โหมดขยายวิธีคิดขึ้นจอ ===== */
+    #bigsteps {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 44px;
+      max-height: 55%;
+      overflow-y: auto;
+      box-sizing: border-box;
+      padding: 10px 24px 14px;
+      background: rgba(255, 255, 255, 0.98);
+      border-top: 4px solid #34495e;
+      box-shadow: 0 -4px 14px rgba(0,0,0,0.15);
+      z-index: 30;
+      color: #2c3e50;
+      font-size: clamp(18px, 2.6vw, 38px);
+      line-height: 1.5;
+      touch-action: auto;
+    }
+    #bigsteps.show { display: block; }
+    #bigsteps.side {
+      left: auto;
+      width: 46%;
+      max-height: none;
+      border-top: none;
+      border-left: 4px solid #34495e;
+      box-shadow: -4px 0 14px rgba(0,0,0,0.15);
+      font-size: clamp(18px, 2.3vw, 36px);
+      padding-top: 14px;
+    }
+    #bigsteps.side .big-head { flex-direction: column; align-items: flex-start; }
+    #bigsteps.side #big-list li { margin: 8px 0; }
+    .big-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    #big-title { font-weight: bold; color: #34495e; font-size: 0.8em; }
+    .big-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .big-btns button { font-size: clamp(13px, 1.3vw, 18px); }
+    .big-method { font-weight: bold; text-decoration: underline; font-size: 0.8em; margin: 2px 0 0; }
+    #big-list { margin: 0; padding-left: 1.6em; }
+    #big-list li { margin: 2px 0; padding: 0 6px; border-radius: 6px; }
+    #big-list li::marker { color: #2c3e50; font-weight: bold; }
+    #big-list li.hidden { color: transparent; background: #ecf0f1; user-select: none; }
+    #big-list li.latest { background: #fef9e7; }
+    .big-hint { font-size: 0.45em; color: #95a5a6; margin-top: 4px; }
+    .zoom-btn { background: #8e44ad !important; font-weight: bold; }
+
     @media (max-width: 767px) {
+      #bigsteps { bottom: 42px; padding: 8px 12px 10px; }
       #footer {
         height: 42px;
         font-size: 12px;
@@ -118,9 +257,15 @@
           5px 8px
           calc(5px + env(safe-area-inset-bottom));
       }
-
-      #canvas-container {
-        bottom: 42px;
+      #canvas-container { bottom: 42px; }
+      #panel {
+        left: 6px;
+        right: 6px;
+        width: auto;
+        max-width: none;
+        bottom: 48px;
+        max-height: 45%;
+        font-size: 14px;
       }
     }
   </style>
@@ -130,20 +275,82 @@
   <div id="header">
     <h2>สื่อจำลองรูปคลี่ปริซึม</h2>
     <div class="controls">
-       <button onclick="changeShape(3)" id="btn-3">ปริซึมสามเหลี่ยมด้านเท่า</button>
-       <button onclick="changeShape(4)" id="btn-4" class="active">ปริซึมสี่เหลี่ยมผืนผ้า</button>
-       <button onclick="changeShape(5)" id="btn-5">ปริซึมห้าเหลี่ยมด้านเท่า</button>
-       <button onclick="changeShape(6)" id="btn-6">ปริซึมหกเหลี่ยมด้านเท่า</button>
-       
+       <span class="ctl-label">ปริซึม</span>
+       <button onclick="changeShape(3)" id="btn-3">สามเหลี่ยมด้านเท่า</button>
+       <button onclick="changeShape('rt')" id="btn-rt">สามเหลี่ยมมุมฉาก</button>
+       <button onclick="changeShape(4)" id="btn-4" class="active">สี่เหลี่ยมผืนผ้า</button>
+       <button onclick="changeShape('sq')" id="btn-sq">สี่เหลี่ยมจัตุรัส</button>
+       <button onclick="changeShape('trap')" id="btn-trap">สี่เหลี่ยมคางหมู</button>
+       <button onclick="changeShape(5)" id="btn-5">ห้าเหลี่ยมด้านเท่า</button>
+       <button onclick="changeShape(6)" id="btn-6">หกเหลี่ยมด้านเท่า</button>
+
        <div class="divider"></div>
-       
-       <button class="action-btn" onclick="setFold(true)">📦 ประกอบปริซึม</button>
-       <button class="action-btn" onclick="setFold(false)">✂️ คลี่ปริซึม</button>
+
+       <button class="action-btn" onclick="setFold(true)">📦 ประกอบ</button>
+       <button class="action-btn" onclick="setFold(false)">✂️ คลี่</button>
     </div>
   </div>
 
   <div id="canvas-container"></div>
-  
+
+  <div id="panel">
+    <div id="panel-head" onclick="togglePanel()">
+      <span>📐 ขนาดและวิธีคิด</span>
+      <span id="panel-arrow">▼</span>
+    </div>
+    <div id="panel-body">
+      <div class="section" id="dim-section"></div>
+
+      <div class="section" id="calc-section">
+        <div class="section-title">วิธีหาพื้นที่ผิว</div>
+        <div class="btn-row">
+          <button onclick="nextStep()">▶ แสดงขั้นถัดไป</button>
+          <button onclick="showAllSteps()">แสดงทั้งหมด</button>
+          <button onclick="hideSteps()">ซ่อนวิธีคิด</button>
+        </div>
+        <div class="btn-row">
+          <button class="zoom-btn" onclick="toggleBig()">🔍 ขยายวิธีคิดขึ้นจอ</button>
+        </div>
+        <ol class="steps" id="steps"></ol>
+        <div class="note" id="poly-note" style="display:none">พื้นที่ฐานของรูปหลายเหลี่ยมด้านเท่าคำนวณโดยโปรแกรม (เป็นค่าประมาณ) ในโจทย์ระดับ ม.2 มักกำหนดพื้นที่ฐานมาให้</div>
+      </div>
+
+      <div class="section" id="cond-section">
+        <label class="toggle">
+          <input type="checkbox" id="cond-toggle" onchange="updateCondition()">
+          <span class="section-title" style="margin:0">ตรวจเงื่อนไข “นักออกแบบกล่อง”</span>
+        </label>
+        <div id="cond-body" style="display:none">
+          <div class="dim-row">
+            <span>มีด้านยาวอย่างน้อย</span>
+            <span><input type="number" id="cond-len" class="small-input" value="8" min="0" step="any" oninput="updateCondition()"> <span class="u-short">ซม.</span></span>
+          </div>
+          <div class="dim-row">
+            <span>พื้นที่ผิวไม่เกิน</span>
+            <span><input type="number" id="cond-area" class="small-input" value="150" min="0" step="any" oninput="updateCondition()"> <span class="u-area">ตร.ซม.</span></span>
+          </div>
+          <ul class="check-list" id="cond-list"></ul>
+          <div id="cond-verdict"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bigsteps">
+    <div class="big-head">
+      <span id="big-title"></span>
+      <span class="big-btns">
+        <button onclick="nextStep()">▶ ขั้นถัดไป</button>
+        <button onclick="showAllSteps()">แสดงทั้งหมด</button>
+        <button onclick="hideSteps()">ซ่อน</button>
+        <button onclick="toggleBig()">✕ ปิด</button>
+      </span>
+    </div>
+    <div class="big-method">วิธีทำ</div>
+    <ol id="big-list"></ol>
+    <div class="big-hint">กด Space หรือ → เพื่อแสดงขั้นถัดไป · กด Esc เพื่อปิด</div>
+  </div>
+
   <div id="footer">
     พัฒนาสื่อโดย✨คุณครูพิมพ์ชนก พวงพี่✨
   </div>
@@ -155,220 +362,762 @@
   <script>
     let scene, camera, renderer, controls;
     let prismGroup = new THREE.Group();
-    
-    let currentSides = 4;
-    let animProgress = 1.0; 
+
+    // รูปทรงปัจจุบัน: 3, 'rt', 4, 'trap', 5, 6
+    let currentShape = 4;
+    let animProgress = 1.0;
     let targetProgress = 1.0;
-    
-    let currentWidths = [];
-    const H = 6.5; 
-    
+
+    // ขนาดจริง (เซนติเมตร) ที่ครูกำหนดได้
+    const dims = {
+      tri:  { s: 4, h: 8 },               // สามเหลี่ยมด้านเท่า ยาวด้านละ s
+      rt:   { a: 3, b: 4, h: 8 },         // ด้านประกอบมุมฉาก a, b
+      rect: { a: 4, b: 5, h: 10 },        // ฐานกว้าง a ฐานยาว b
+      sq:   { s: 5, h: 10 },              // ฐานสี่เหลี่ยมจัตุรัส ยาวด้านละ s
+      trap: { a: 12, b: 6, t: 4, h: 10 }, // คางหมูหน้าจั่ว ด้านคู่ขนาน a, b สูง t
+      p5:   { s: 4, h: 8 },               // ห้าเหลี่ยมด้านเท่า
+      p6:   { s: 4, h: 8 }                // หกเหลี่ยมด้านเท่า
+    };
+    // หน่วยความยาว (เปลี่ยนเฉพาะชื่อหน่วย ตัวเลขที่กรอกถือว่าเป็นหน่วยที่เลือก)
+    const UNITS = {
+      mm: { s: 'มม.', l: 'มิลลิเมตร', as: 'ตร.มม.', al: 'ตารางมิลลิเมตร' },
+      cm: { s: 'ซม.', l: 'เซนติเมตร', as: 'ตร.ซม.', al: 'ตารางเซนติเมตร' },
+      m:  { s: 'ม.',  l: 'เมตร',      as: 'ตร.ม.',  al: 'ตารางเมตร' },
+      in: { s: 'นิ้ว', l: 'นิ้ว',      as: 'ตร.นิ้ว', al: 'ตารางนิ้ว' }
+    };
+    let unit = 'cm';
+    function U() { return UNITS[unit]; }
+    function setUnit(u) {
+      unit = u;
+      document.querySelectorAll('.u-short').forEach(e => e.textContent = U().s);
+      document.querySelectorAll('.u-area').forEach(e => e.textContent = U().as);
+      updatePanel();
+      buildPrism();
+    }
+
+    const SHAPE_KEYS = ['3', 'rt', '4', 'sq', 'trap', '5', '6'];
+    const DIM_KEY = { 3: 'tri', rt: 'rt', 4: 'rect', sq: 'sq', trap: 'trap', 5: 'p5', 6: 'p6' };
+    const POLY_NAME = { 3: 'สามเหลี่ยมด้านเท่า', 5: 'ห้าเหลี่ยมด้านเท่า', 6: 'หกเหลี่ยมด้านเท่า' };
+
+    let currentWidths = [];   // ความกว้างของด้านข้างแต่ละหน้า (หน่วยในฉาก)
+    let extAngles = [];       // มุมพับระหว่างหน้า
+    let H = 6.5;              // ความสูงของปริซึม (หน่วยในฉาก)
+
     let latFaces = [];
     let topBaseMesh, bottomBaseMesh;
+    let netLabels = [];       // ป้ายความยาวที่แสดงตอนคลี่
+    let showLabels = true;
+    let netW = 14, netH = 11.5;  // ขนาดรูปคลี่ในฉาก ใช้จัดมุมกล้องให้พอดีจอ
+    let showPerimeter = false; // ความยาวรวมของด้านข้าง ซ่อนไว้ก่อน
+    let perimeterLabel = null;
+    let baseTextTop = null;     // คำว่า "ฐาน" บนฐานด้านบน
+    let stepShown = 0;
+
+    const LABEL_H = 0.55;     // ความสูงของป้ายตัวเลขในฉาก
 
     init();
-    
-    function init() {
+
+    // ให้พื้นที่ภาพเริ่มใต้แถบปุ่มด้านบน จะได้ไม่ถูกบัง
+    function layoutCanvas() {
+       const header = document.getElementById('header');
        const container = document.getElementById('canvas-container');
-       
+       container.style.top = header.offsetHeight + 'px';
+       const big = document.getElementById('bigsteps');
+       const footerH = document.getElementById('footer').offsetHeight;
+       const on = big && big.classList.contains('show');
+       // จอกว้างแนวนอน (เช่น โปรเจกเตอร์): รูปอยู่ซ้าย วิธีคิดอยู่ขวา / จอแคบ: วิธีคิดอยู่ด้านล่าง
+       const side = on && window.innerWidth >= 900 && window.innerWidth / window.innerHeight >= 1.3;
+       if (big) {
+         big.classList.toggle('side', side);
+         big.style.top = side ? header.offsetHeight + 'px' : '';
+         const free = window.innerHeight - header.offsetHeight - footerH;
+         big.style.maxHeight = (on && !side) ? Math.max(110, Math.floor(free * 0.5)) + 'px' : '';
+       }
+       container.style.right = side ? big.offsetWidth + 'px' : '0px';
+       container.style.width = 'auto';
+       container.style.bottom = (on && !side ? big.offsetHeight + footerH : footerH) + 'px';
+    }
+
+    function fitCamera() {
+       if (!camera || !controls) return;
+       const halfTan = Math.tan(camera.fov * Math.PI / 360);
+       const extraW = 4.5;      // เผื่อที่ให้ป้าย "สูง ... ซม." ด้านขวา และป้ายความยาวฐานด้านซ้าย
+       const needW = (netW + extraW) / 2 / (halfTan * camera.aspect);
+       const needH = (netH + 2.4) / 2 / halfTan;
+       const dist = Math.min(Math.max(needW, needH, 8) * 1.05, 400);
+       const dir = camera.position.clone().sub(controls.target).normalize();
+       camera.position.copy(controls.target).add(dir.multiplyScalar(dist));
+       controls.update();
+    }
+
+    function init() {
+       layoutCanvas();
+       const container = document.getElementById('canvas-container');
+
        scene = new THREE.Scene();
        scene.background = new THREE.Color(0xf4f7f6);
-       
-       camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+
+       camera = new THREE.PerspectiveCamera(40, Math.max(container.clientWidth, 1) / Math.max(container.clientHeight, 1), 0.1, 1000);
        camera.position.set(0, 6, 22);
-       
+
        renderer = new THREE.WebGLRenderer({ antialias: true });
        renderer.setSize(container.clientWidth, container.clientHeight);
-       renderer.setPixelRatio(window.devicePixelRatio); 
+       renderer.setPixelRatio(window.devicePixelRatio);
        container.appendChild(renderer.domElement);
-       
+
        controls = new THREE.OrbitControls(camera, renderer.domElement);
        controls.enableDamping = true;
        controls.enablePan = false;
-       
+
        const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
        scene.add(ambientLight);
        const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
        dirLight.position.set(10, 20, 15);
        scene.add(dirLight);
-       
+
        scene.add(prismGroup);
-       
-       buildPrism(currentSides);
-       
+
+       buildPrism();
+       updatePanel();
+
+       // วาดตัวอักษรใหม่เมื่อฟอนต์ Sarabun โหลดเสร็จ
+       if (document.fonts && document.fonts.load) {
+         document.fonts.load('bold 60px "Sarabun"').then(() => { onWindowResize(); buildPrism(); }).catch(() => {});
+       }
+
        window.addEventListener('resize', onWindowResize);
+       if (window.innerWidth < 768) togglePanel(); // บนมือถือให้พับแผงไว้ก่อน
        animate();
     }
 
+    // ---------- การคำนวณและการจัดรูปแบบตัวเลข ----------
+    function fmt(x) {
+      const r = Math.round(x * 100) / 100;
+      return Number.isInteger(r) ? String(r) : r.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+    }
+    function isExact(x) { return Math.abs(x - Math.round(x * 100) / 100) < 1e-9; }
+
+    function isCustom() { return true; }   // ทุกรูปปรับขนาดได้แล้ว
+    function isRegular() { return currentShape === 3 || currentShape === 5 || currentShape === 6; }
+
+    // จุดยอดของฐาน (ทวนเข็มนาฬิกา เริ่มที่ (0,0) และด้านแรกตามแกน x) หน่วยเซนติเมตร
+    function baseVerticesReal() {
+      if (currentShape === 4) {
+        const { a, b } = dims.rect;
+        return [[0, 0], [a, 0], [a, b], [0, b]];
+      }
+      if (currentShape === 'sq') {
+        const s = dims.sq.s;
+        return [[0, 0], [s, 0], [s, s], [0, s]];
+      }
+      if (currentShape === 'rt') {
+        const { a, b } = dims.rt;
+        return [[0, 0], [a, 0], [0, b]];
+      }
+      if (currentShape === 'trap') {
+        const { a, b, t } = dims.trap;
+        return [[0, 0], [a, 0], [(a + b) / 2, t], [(a - b) / 2, t]];
+      }
+      const n = currentShape, side = dims[DIM_KEY[n]].s;
+      const v = [[0, 0]];
+      let x = 0, y = 0, ang = 0;
+      for (let i = 1; i < n; i++) {
+        x += side * Math.cos(ang); y += side * Math.sin(ang);
+        v.push([x, y]);
+        ang += Math.PI * 2 / n;
+      }
+      return v;
+    }
+
+    // ข้อมูลรูปทรงในหน่วยจริง คำนวณจากจุดยอดของฐาน
+    function shapeConfig() {
+      const v = baseVerticesReal();
+      const n = v.length;
+      const widths = [], dirs = [];
+      for (let i = 0; i < n; i++) {
+        const p = v[i], q = v[(i + 1) % n];
+        widths.push(Math.hypot(q[0] - p[0], q[1] - p[1]));
+        dirs.push(Math.atan2(q[1] - p[1], q[0] - p[0]));
+      }
+      const exts = [0];
+      for (let i = 1; i < n; i++) {
+        let t = dirs[i] - dirs[i - 1];
+        while (t <= 0) t += Math.PI * 2;
+        while (t > Math.PI * 2) t -= Math.PI * 2;
+        exts.push(t);
+      }
+      const xs = v.map(p => p[0]), ys = v.map(p => p[1]);
+      const cxr = xs.reduce((a, b) => a + b, 0) / n, cyr = ys.reduce((a, b) => a + b, 0) / n;
+      const bw = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+      const bh = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+      return {
+        verts: v, widths, exts,
+        h: dims[DIM_KEY[currentShape]].h,
+        depth: Math.max.apply(null, ys),
+        center: [cxr, cyr],
+        textSize: Math.min(bw, bh) * (n === 3 ? 0.38 : 0.55)
+      };
+    }
+
+    function polygonArea(v) {
+      let A = 0;
+      for (let i = 0; i < v.length; i++) {
+        const p = v[i], q = v[(i + 1) % v.length];
+        A += p[0] * q[1] - q[0] * p[1];
+      }
+      return Math.abs(A) / 2;
+    }
+
+    function surfaceData() {
+      const cfg = shapeConfig();
+      const base = polygonArea(cfg.verts);
+      const per = cfg.widths.reduce((a, b) => a + b, 0);
+      const lat = per * cfg.h;
+      return Object.assign({ base, per, lat, total: 2 * base + lat, widths: cfg.widths, h: cfg.h },
+                           dims[DIM_KEY[currentShape]]);
+    }
+
+    // ---------- การวาด ----------
     function createLatTexture(w, h) {
         const canvas = document.createElement('canvas');
-        const pxW = Math.round(w * 100);
-        const pxH = Math.round(h * 100);
+        const pxW = Math.max(16, Math.round(w * 100));
+        const pxH = Math.max(16, Math.round(h * 100));
         canvas.width = pxW; canvas.height = pxH;
         const ctx = canvas.getContext('2d');
-        
+
         ctx.fillStyle = '#4298d5';
         ctx.fillRect(0, 0, pxW, pxH);
-        
+
+        const fs = Math.max(18, Math.min(60, pxW * 0.22, pxH * 0.3));
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 60px "Sarabun", sans-serif';
+        ctx.font = 'bold ' + fs + 'px "Sarabun", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('ด้านข้าง', pxW / 2, pxH / 2);
-        
+
         return new THREE.CanvasTexture(canvas);
     }
-    
+
     function createBaseTexture() {
         const canvas = document.createElement('canvas');
         canvas.width = 512; canvas.height = 512;
         const ctx = canvas.getContext('2d');
-        
-        ctx.fillStyle = 'rgba(255, 255, 255, 0)'; 
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0)';
         ctx.fillRect(0, 0, 512, 512);
-        
+
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 160px "Sarabun", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('ฐาน', 256, 256);
-        
+
         return new THREE.CanvasTexture(canvas);
     }
 
-    function buildPrism(sides) {
-       while(prismGroup.children.length > 0){ 
-           prismGroup.remove(prismGroup.children[0]); 
+    // ป้ายตัวเลขที่หันหน้าเข้าหาผู้ชมเสมอ
+    function makeLabel(text, color, maxWorldW) {
+        const fontPx = 64, padX = 22, padY = 12;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.font = 'bold ' + fontPx + 'px "Sarabun", sans-serif';
+        const tw = ctx.measureText(text).width;
+        canvas.width = Math.ceil(tw + padX * 2);
+        canvas.height = Math.ceil(fontPx * 1.35 + padY * 2);
+        ctx.font = 'bold ' + fontPx + 'px "Sarabun", sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.93)';
+        roundRect(ctx, 2, 2, canvas.width - 4, canvas.height - 4, 18);
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 2);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.minFilter = THREE.LinearFilter;
+        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
+        const sprite = new THREE.Sprite(mat);
+        let wWorld = LABEL_H * canvas.width / canvas.height;
+        let hWorld = LABEL_H;
+        if (maxWorldW && wWorld > maxWorldW) {
+          hWorld = hWorld * maxWorldW / wWorld;
+          wWorld = maxWorldW;
+        }
+        sprite.scale.set(wWorld, hWorld, 1);
+        sprite.renderOrder = 999;
+        netLabels.push(sprite);
+        return sprite;
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    function disposeGroup(obj) {
+        obj.traverse(o => {
+          if (o.geometry) o.geometry.dispose();
+          if (o.material) {
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            mats.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); });
+          }
+        });
+    }
+
+    function buildPrism() {
+       while (prismGroup.children.length > 0) {
+           const child = prismGroup.children[0];
+           disposeGroup(child);
+           prismGroup.remove(child);
        }
        latFaces = [];
-       currentWidths = [];
-       
-       if (sides === 4) {
-           currentWidths = [4.5, 2.5, 4.5, 2.5]; 
-       } else {
-           for(let i=0; i<sides; i++) currentWidths.push(3.5); 
+       netLabels = [];
+       perimeterLabel = null;
+
+       const cfg = shapeConfig();
+       const sides = cfg.widths.length;
+
+       // ย่อหรือขยายให้พอดีจอ (เฉพาะรูปที่ปรับขนาดได้)
+       let s = 1;
+       if (isCustom()) {
+         const sumReal = cfg.widths.reduce((p, q) => p + q, 0);
+         s = Math.min(14 / sumReal, 12 / (cfg.h + 2 * cfg.depth));
        }
-       
+       currentWidths = cfg.widths.map(w => w * s);
+       extAngles = cfg.exts;
+       H = cfg.h * s;
+       netW = currentWidths.reduce((p, q) => p + q, 0);
+       netH = H + 2 * cfg.depth * s;
+
        const baseMat = new THREE.MeshLambertMaterial({ color: 0xf39c12, side: THREE.DoubleSide });
        const edgeMat = new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.25, gapSize: 0.15 });
-       
+
        const baseTextTex = createBaseTexture();
        const baseTextMat = new THREE.MeshBasicMaterial({ map: baseTextTex, transparent: true, side: THREE.DoubleSide });
-       
+
        let parent = prismGroup;
-       
-       for(let i=0; i<sides; i++) {
+
+       for (let i = 0; i < sides; i++) {
            const currentW = currentWidths[i];
            const latTex = createLatTexture(currentW, H);
            const latMat = new THREE.MeshLambertMaterial({ map: latTex, side: THREE.DoubleSide });
-           
+
            const geo = new THREE.PlaneGeometry(currentW, H);
-           geo.translate(currentW/2, 0, 0); 
+           geo.translate(currentW / 2, 0, 0);
            const mesh = new THREE.Mesh(geo, latMat);
-           
+
            const edges = new THREE.EdgesGeometry(geo);
            const line = new THREE.LineSegments(edges, edgeMat);
-           line.computeLineDistances(); 
+           line.computeLineDistances();
            mesh.add(line);
-           
-           if(i === 0) {
-               parent.add(mesh);
-           } else {
-               mesh.position.x = currentWidths[i-1]; 
-               parent.add(mesh);
-           }
+
+           if (i > 0) mesh.position.x = currentWidths[i - 1];
+           parent.add(mesh);
            latFaces.push(mesh);
-           parent = mesh; 
+           parent = mesh;
        }
-       
+
+       // ฐาน
        const shape = new THREE.Shape();
        let angle = 0;
-       const extAngle = Math.PI * 2 / sides;
        shape.moveTo(0, 0);
        let px = 0, py = 0;
-       for(let i=1; i<sides; i++) {
-           px += currentWidths[i-1] * Math.cos(angle);
-           py += currentWidths[i-1] * Math.sin(angle);
+       const baseVerts = [[0, 0]];
+       for (let i = 1; i < sides; i++) {
+           px += currentWidths[i - 1] * Math.cos(angle);
+           py += currentWidths[i - 1] * Math.sin(angle);
            shape.lineTo(px, py);
-           angle += extAngle;
+           baseVerts.push([px, py]);
+           angle += extAngles[i];
        }
        const baseGeo = new THREE.ShapeGeometry(shape);
-       
-       let centerY;
-       if (sides === 4) {
-           centerY = currentWidths[1] / 2; 
-       } else {
-           centerY = currentWidths[0] / (2 * Math.tan(Math.PI / sides)); 
-       }
-       
+
+       const cx = cfg.center[0] * s, cy = cfg.center[1] * s;
+       const textPlaneSize = cfg.textSize * s;
+
        topBaseMesh = new THREE.Mesh(baseGeo, baseMat);
-       topBaseMesh.position.set(0, H/2, 0);
-       
+       topBaseMesh.position.set(0, H / 2, 0);
        const topEdges = new THREE.EdgesGeometry(baseGeo);
        const topLine = new THREE.LineSegments(topEdges, edgeMat);
        topLine.computeLineDistances();
        topBaseMesh.add(topLine);
-       
-       const textPlaneSize = Math.min(currentWidths[0], centerY * 2) * 0.7;
        const textMeshTop = new THREE.Mesh(new THREE.PlaneGeometry(textPlaneSize, textPlaneSize), baseTextMat);
-       textMeshTop.position.set(currentWidths[0]/2, centerY, 0.05);
+       textMeshTop.position.set(cx, cy, 0.05);
        topBaseMesh.add(textMeshTop);
-       
+       baseTextTop = textMeshTop;
        latFaces[0].add(topBaseMesh);
-       
+
        bottomBaseMesh = new THREE.Mesh(baseGeo, baseMat);
-       bottomBaseMesh.position.set(0, -H/2, 0);
-       
+       bottomBaseMesh.position.set(0, -H / 2, 0);
        const botEdges = new THREE.EdgesGeometry(baseGeo);
        const botLine = new THREE.LineSegments(botEdges, edgeMat);
        botLine.computeLineDistances();
        bottomBaseMesh.add(botLine);
-       
        const textMeshBot = textMeshTop.clone();
-       textMeshBot.rotation.x = Math.PI; 
+       textMeshBot.rotation.x = Math.PI;
        textMeshBot.position.z = -0.05;
        bottomBaseMesh.add(textMeshBot);
-       
        latFaces[0].add(bottomBaseMesh);
+
+       // ป้ายความยาวบนรูปคลี่ (เฉพาะรูปที่ปรับขนาดได้)
+       if (isCustom()) addNetLabels(cfg, baseVerts, cx, cy);
+       fitCamera();
     }
 
-    function changeShape(sides) {
-      currentSides = sides;
-      document.getElementById('btn-3').classList.remove('active');
-      document.getElementById('btn-4').classList.remove('active');
-      document.getElementById('btn-5').classList.remove('active');
-      document.getElementById('btn-6').classList.remove('active');
-      document.getElementById('btn-'+sides).classList.add('active');
-      buildPrism(currentSides);
+    function addNetLabels(cfg, baseVerts, cx, cy) {
+       const sides = currentWidths.length;
+       const realW = cfg.widths;
+
+       // ความยาวของด้านข้างแต่ละหน้า (วางไว้ในหน้า ใกล้ขอบล่าง)
+       for (let i = 0; i < sides; i++) {
+         const txt = (isExact(realW[i]) ? '' : '≈ ') + fmt(realW[i]) + ' ' + U().s + '';
+         const lb = makeLabel(txt, '#1f4e79', currentWidths[i] * 0.95);
+         lb.position.set(currentWidths[i] / 2, -H / 2 + LABEL_H * 0.9, 0.02);
+         latFaces[i].add(lb);
+       }
+
+       // ความยาวของฐานแต่ละด้าน (วางไว้นอกฐาน ชิดแต่ละขอบ จะได้ไม่ทับกัน)
+       for (let k = 0; k < sides; k++) {
+         const v1 = baseVerts[k], v2 = baseVerts[(k + 1) % sides];
+         const mx = (v1[0] + v2[0]) / 2, my = (v1[1] + v2[1]) / 2;
+         const ex = v2[0] - v1[0], ey = v2[1] - v1[1];
+         const el = Math.hypot(ex, ey) || 1;
+         const nx = ey / el, ny = -ex / el;     // ทิศออกนอกฐาน (ฐานเรียงทวนเข็มนาฬิกา)
+         const txt = (isExact(realW[k]) ? '' : '≈ ') + fmt(realW[k]) + ' ' + U().s + '';
+         // ขอบแรกติดกับด้านข้าง ป้ายจะอยู่ในหน้าด้านข้าง จึงจำกัดความกว้างให้พอดีหน้า
+         const bl = makeLabel(txt, '#a04000', k === 0 ? currentWidths[0] * 0.9 : undefined);
+         const off = 0.12 + Math.abs(nx) * bl.scale.x / 2 + Math.abs(ny) * bl.scale.y / 2;
+         bl.position.set(mx + nx * off, my + ny * off, 0.06);
+         topBaseMesh.add(bl);
+       }
+
+       // ความสูงของรูปสี่เหลี่ยมคางหมู (เส้นประในฐาน)
+       if (currentShape === 'trap') addTrapHeight(baseVerts, cfg);
+
+       // ความสูงของปริซึม (ด้านขวาของหน้าสุดท้าย)
+       const hl = makeLabel('สูง ' + fmt(cfg.h) + ' ' + U().s + '', '#c0392b');
+       hl.position.set(currentWidths[sides - 1] + 0.25 + hl.scale.x / 2, 0, 0.02);
+       latFaces[sides - 1].add(hl);
+
+       // ความยาวรอบรูปของฐาน = ความยาวของสี่เหลี่ยมผืนผ้าผืนใหญ่ (ใต้แถบด้านข้าง)
+       const parts = realW.map(w => fmt(w)).join(' + ');
+       const per = realW.reduce((p, q) => p + q, 0);
+       const approx = realW.some(w => !isExact(w)) ? '≈ ' : '= ';
+       const sumW = currentWidths.reduce((p, q) => p + q, 0);
+       const free = sumW - currentWidths[0];  // ช่วงที่ไม่มีฐานบังอยู่ด้านล่าง
+       const pl = makeLabel('ยาวรวม ' + parts + ' ' + approx + fmt(per) + ' ' + U().s + '', '#8e44ad', free * 0.98);
+       pl.position.set(currentWidths[0] + free / 2, -H / 2 - pl.scale.y / 2 - 0.2, 0.02);
+       prismGroup.add(pl);
+       netLabels.pop();          // ป้ายนี้ควบคุมแยกด้วยปุ่ม แสดง/ซ่อนความยาวรวม
+       perimeterLabel = pl;
+    }
+
+    function addTrapHeight(baseVerts, cfg) {
+       // ลากจากมุมบนของด้านคู่ขนานด้านที่ 2 ลงมาตั้งฉากกับด้านคู่ขนานด้านที่ 1
+       const top = baseVerts[3];
+       const x = top[0], yTop = top[1];
+       const pts = [new THREE.Vector3(x, 0, 0.04), new THREE.Vector3(x, yTop, 0.04)];
+       const geo = new THREE.BufferGeometry().setFromPoints(pts);
+       const mat = new THREE.LineDashedMaterial({ color: 0x1e8449, dashSize: 0.18, gapSize: 0.1, depthTest: false });
+       const line = new THREE.Line(geo, mat);
+       line.computeLineDistances();
+       line.renderOrder = 998;
+       topBaseMesh.add(line);
+       netLabels.push(line);   // แสดงพร้อมป้ายอื่นตอนคลี่
+
+       // สัญลักษณ์มุมฉากเล็ก ๆ ที่ปลายล่างของเส้น
+       const m = Math.min(0.3, yTop * 0.25);
+       const sqGeo = new THREE.BufferGeometry().setFromPoints([
+         new THREE.Vector3(x, m, 0.04), new THREE.Vector3(x + m, m, 0.04), new THREE.Vector3(x + m, 0, 0.04)]);
+       const sqLine = new THREE.Line(sqGeo, new THREE.LineBasicMaterial({ color: 0x1e8449, depthTest: false }));
+       sqLine.renderOrder = 998;
+       topBaseMesh.add(sqLine);
+       netLabels.push(sqLine);
+
+       const t = dims.trap.t;
+       const lb = makeLabel('สูง ' + fmt(t) + ' ' + U().s + '', '#1e8449');
+       lb.position.set(x + 0.15 + lb.scale.x / 2, yTop / 2, 0.06);
+       topBaseMesh.add(lb);
+
+       // ย้ายคำว่า "ฐาน" ไปไว้ช่องว่างด้านขวาของป้าย จะได้ไม่ทับกัน
+       if (baseTextTop) {
+         const labelEnd = x + 0.15 + lb.scale.x;
+         const rightX = (baseVerts[1][0] + baseVerts[2][0]) / 2;   // ขาด้านขวาที่ระดับครึ่งความสูง
+         const avail = rightX - labelEnd;
+         const size0 = baseTextTop.geometry.parameters ? baseTextTop.geometry.parameters.width : 1;
+         if (avail > 0.45) {
+           const size = Math.min(avail * 0.9, yTop * 0.8);
+           const k = size / size0;
+           baseTextTop.position.set((labelEnd + rightX) / 2, yTop / 2, 0.05);
+           baseTextTop.scale.set(k, k, 1);
+         } else {
+           baseTextTop.visible = false;
+         }
+       }
+    }
+
+    // ---------- ปุ่มและแผงควบคุม ----------
+    function changeShape(shape) {
+      currentShape = shape;
+      SHAPE_KEYS.forEach(k => document.getElementById('btn-' + k).classList.remove('active'));
+      document.getElementById('btn-' + shape).classList.add('active');
+      stepShown = 0;
+      showPerimeter = false;
+      buildPrism();
+      updatePanel();
     }
 
     function setFold(isFolded) {
       targetProgress = isFolded ? 1.0 : 0.0;
     }
 
+    function togglePanel() {
+      const p = document.getElementById('panel');
+      p.classList.toggle('collapsed');
+      document.getElementById('panel-arrow').textContent = p.classList.contains('collapsed') ? '▲' : '▼';
+    }
+
+    function dimInput(key, field, labelText) {
+      return '<div class="dim-row"><span>' + labelText + '</span><span>' +
+        '<input type="number" min="0.1" max="1000" step="any" value="' + dims[key][field] +
+        '" oninput="onDimInput(\'' + key + '\', \'' + field + '\', this.value)"> <span class="unit">' + U().s + '</span></span></div>';
+    }
+
+    function computedRow(id, label, value) {
+      return '<div class="dim-row"><span>' + label + '</span><span id="' + id + '"><b>' +
+             (isExact(value) ? '' : '≈ ') + fmt(value) + '</b> <span class="unit">' + U().s + '</span></span></div>';
+    }
+
+    function renderDimSection() {
+      const el = document.getElementById('dim-section');
+      let html = '<div class="section-title">กำหนดขนาด</div>';
+      html += '<div class="dim-row"><span>หน่วยความยาว</span><select id="unit-sel" onchange="setUnit(this.value)" ' +
+              'style="font-family:inherit;font-size:15px;padding:3px 6px;border-radius:6px;border:1px solid #bbb">' +
+              Object.keys(UNITS).map(k => '<option value="' + k + '"' + (k === unit ? ' selected' : '') + '>' + UNITS[k].l + '</option>').join('') +
+              '</select></div>';
+      const key = DIM_KEY[currentShape];
+      if (currentShape === 4) {
+        html += dimInput(key, 'a', 'ฐานกว้าง');
+        html += dimInput(key, 'b', 'ฐานยาว');
+      } else if (currentShape === 'sq') {
+        html += dimInput(key, 's', 'ความยาวด้านของฐานสี่เหลี่ยมจัตุรัส');
+      } else if (currentShape === 'rt') {
+        html += dimInput(key, 'a', 'ด้านประกอบมุมฉาก ด้านที่ 1');
+        html += dimInput(key, 'b', 'ด้านประกอบมุมฉาก ด้านที่ 2');
+        html += computedRow('derived-out', 'ด้านตรงข้ามมุมฉาก', Math.hypot(dims.rt.a, dims.rt.b));
+      } else if (currentShape === 'trap') {
+        html += dimInput(key, 'a', 'ด้านคู่ขนาน ด้านที่ 1');
+        html += dimInput(key, 'b', 'ด้านคู่ขนาน ด้านที่ 2');
+        html += dimInput(key, 't', 'ความสูงของรูปสี่เหลี่ยมคางหมู');
+        html += computedRow('derived-out', 'ด้านที่ไม่ขนานกัน (ยาวเท่ากัน)', trapLeg());
+      } else {
+        html += dimInput(key, 's', 'ความยาวด้านของฐาน (ทุกด้านยาวเท่ากัน)');
+      }
+      html += dimInput(key, 'h', 'ความสูงของปริซึม');
+      if (currentShape === 'rt') html += '<div class="note">ด้านตรงข้ามมุมฉากคำนวณจากทฤษฎีบทพีทาโกรัส</div>';
+      if (currentShape === 'trap') html += '<div class="note">เป็นรูปสี่เหลี่ยมคางหมูที่ด้านไม่ขนานยาวเท่ากัน ความยาวคำนวณจากทฤษฎีบทพีทาโกรัส</div>';
+      html += '<label class="toggle"><input type="checkbox" ' + (showLabels ? 'checked' : '') +
+              ' onchange="showLabels=this.checked"> แสดงความยาวด้านบนรูปคลี่</label>';
+      html += '<div class="btn-row"><button id="per-btn" onclick="togglePerimeter()">' + perimeterBtnText() + '</button></div>';
+      html += '<div id="dim-warn" class="warn"></div>';
+      el.innerHTML = html;
+    }
+
+    function trapLeg() {
+      const { a, b, t } = dims.trap;
+      return Math.hypot((a - b) / 2, t);
+    }
+
+    function perimeterBtnText() {
+      return showPerimeter ? '🙈 ซ่อนความยาวรวมของด้านข้าง' : '👁 เฉลยความยาวรวมของด้านข้าง';
+    }
+    function togglePerimeter() {
+      showPerimeter = !showPerimeter;
+      const b = document.getElementById('per-btn');
+      if (b) b.textContent = perimeterBtnText();
+    }
+
+    let rebuildTimer = null;
+    function onDimInput(key, field, value) {
+      const v = parseFloat(value);
+      const warn = document.getElementById('dim-warn');
+      if (!(v >= 0.1 && v <= 1000)) {
+        if (warn) warn.textContent = 'กรุณากรอกความยาวระหว่าง 0.1 ถึง 1000 ' + U().s + '';
+        return;
+      }
+      if (warn) warn.textContent = '';
+      dims[key][field] = v;
+      stepShown = 0;
+      const out = document.getElementById('derived-out');
+      if (out) {
+        const val = key === 'rt' ? Math.hypot(dims.rt.a, dims.rt.b) : key === 'trap' ? trapLeg() : null;
+        if (val !== null) out.innerHTML = '<b>' + (isExact(val) ? '' : '≈ ') + fmt(val) + '</b> <span class="unit">' + U().s + '</span>';
+      }
+      updateSteps();
+      updateCondition();
+      clearTimeout(rebuildTimer);
+      rebuildTimer = setTimeout(buildPrism, 150);
+    }
+
+    function stepTexts() {
+      const d = surfaceData();
+      const approxLat = d.widths.some(w => !isExact(w));
+      let baseLine, baseApprox = false;
+      if (currentShape === 4) {
+        baseLine = 'พื้นที่ของฐาน = ' + fmt(d.a) + ' × ' + fmt(d.b);
+      } else if (currentShape === 'sq') {
+        baseLine = 'พื้นที่ของฐาน = ' + fmt(d.s) + ' × ' + fmt(d.s);
+      } else if (currentShape === 'rt') {
+        baseLine = 'พื้นที่ของฐาน = ½ × ' + fmt(d.a) + ' × ' + fmt(d.b);
+      } else if (currentShape === 'trap') {
+        baseLine = 'พื้นที่ของฐาน = ½ × (' + fmt(d.a) + ' + ' + fmt(d.b) + ') × ' + fmt(d.t);
+      } else {
+        baseApprox = !isExact(d.base);
+        baseLine = 'พื้นที่ของฐาน (รูป' + POLY_NAME[currentShape] + ' ยาวด้านละ ' + fmt(d.s) + ' ' + U().l + ')';
+      }
+      const eqB = baseApprox ? ' ≈ ' : ' = ';
+      const eqL = approxLat ? ' ≈ ' : ' = ';
+      const eqT = (baseApprox || approxLat) ? ' ≈ ' : ' = ';
+      return [
+        baseLine + eqB + fmt(d.base) + ' ' + U().al + '',
+        'พื้นที่ของด้านข้าง = (' + d.widths.map(fmt).join(' + ') + ') × ' + fmt(d.h) + eqL + fmt(d.lat) + ' ' + U().al + '',
+        'พื้นที่ผิวของปริซึม = (2 × ' + fmt(d.base) + ') + ' + fmt(d.lat) + eqT + fmt(d.total) + ' ' + U().al + '',
+        'ดังนั้น พื้นที่ผิวของปริซึม' + (eqT === ' = ' ? 'เท่ากับ ' : 'ประมาณ ') + fmt(d.total) + ' ' + U().al + ''
+      ];
+    }
+
+    function updateSteps() {
+      const ol = document.getElementById('steps');
+      const texts = stepTexts();
+      ol.innerHTML = texts.map((t, i) =>
+        '<li class="' + (i < stepShown ? '' : 'hidden') + '">' + t + '</li>').join('');
+      const big = document.getElementById('big-list');
+      big.innerHTML = texts.map((t, i) =>
+        '<li class="' + (i < stepShown ? (i === stepShown - 1 ? 'latest' : '') : 'hidden') + '">' + t + '</li>').join('');
+      document.getElementById('big-title').textContent = dimsSummary() + ' จงหาพื้นที่ผิวของปริซึมนี้';
+    }
+
+    function dimsSummary() {
+      const d = dims[DIM_KEY[currentShape]];
+      const u = ' ' + U().s;
+      const hh = ' ความสูงของปริซึม ' + fmt(d.h) + u;
+      if (currentShape === 4) return 'ปริซึมสี่เหลี่ยมผืนผ้า ฐานกว้าง ' + fmt(d.a) + u + ' ยาว ' + fmt(d.b) + u + hh;
+      if (currentShape === 'sq') return 'ปริซึมสี่เหลี่ยมจัตุรัส ฐานยาวด้านละ ' + fmt(d.s) + u + hh;
+      if (currentShape === 'rt') {
+        const c = Math.hypot(d.a, d.b);
+        return 'ปริซึมสามเหลี่ยมมุมฉาก ฐานยาว ' + fmt(d.a) + ', ' + fmt(d.b) + ' และ ' +
+               (isExact(c) ? '' : '≈ ') + fmt(c) + u + hh;
+      }
+      if (currentShape === 'trap') return 'ปริซึมสี่เหลี่ยมคางหมู ด้านคู่ขนาน ' + fmt(d.a) + ' และ ' + fmt(d.b) +
+        u + ' สูง ' + fmt(d.t) + u + hh;
+      return 'ปริซึม' + POLY_NAME[currentShape] + ' ฐานยาวด้านละ ' + fmt(d.s) + u + hh;
+    }
+
+    // ---------- โหมดขยายวิธีคิดขึ้นจอ ----------
+    let bigOn = false;
+    function toggleBig() {
+      bigOn = !bigOn;
+      const box = document.getElementById('bigsteps');
+      box.classList.toggle('show', bigOn);
+      const panel = document.getElementById('panel');
+      if (bigOn && !panel.classList.contains('collapsed')) togglePanel();
+      panel.style.display = bigOn ? 'none' : '';
+      updateSteps();
+      onWindowResize();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (!bigOn) return;
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); nextStep(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); stepShown = Math.max(0, stepShown - 1); updateSteps(); }
+      else if (e.key === 'Escape') toggleBig();
+    });
+    function nextStep() { stepShown = Math.min(4, stepShown + 1); updateSteps(); }
+    function showAllSteps() { stepShown = 4; updateSteps(); }
+    function hideSteps() { stepShown = 0; updateSteps(); }
+
+    function updateCondition() {
+      const on = document.getElementById('cond-toggle').checked;
+      document.getElementById('cond-body').style.display = on ? 'block' : 'none';
+      if (!on) return;
+      const minLen = parseFloat(document.getElementById('cond-len').value) || 0;
+      const maxArea = parseFloat(document.getElementById('cond-area').value) || 0;
+      const d = surfaceData();
+      const list = document.getElementById('cond-list');
+      const verdict = document.getElementById('cond-verdict');
+
+      const isRect = currentShape === 4 || currentShape === 'sq';
+      const edges = d.widths.concat([d.h]);
+      const longest = Math.max.apply(null, edges);
+      const allInt = edges.every(x => Math.abs(x - Math.round(x)) < 1e-9);
+      const checks = [
+        [isRect, 'เป็นปริซึมสี่เหลี่ยมมุมฉาก (สี่เหลี่ยมผืนผ้าหรือสี่เหลี่ยมจัตุรัส)'],
+        [longest >= minLen, 'มีด้านยาวอย่างน้อย ' + fmt(minLen) + ' ' + U().s + ' (ด้านที่ยาวที่สุด ' + fmt(longest) + ' ' + U().s + ')'],
+        [allInt, 'ขนาดทุกด้านเป็นจำนวนเต็ม' + U().l + ''],
+        [d.total <= maxArea + 1e-9, 'พื้นที่ผิวไม่เกิน ' + fmt(maxArea) + ' ' + U().as + ' (ได้ ' + fmt(d.total) + ' ' + U().as + ')']
+      ];
+      list.innerHTML = checks.map(c =>
+        '<li><span class="' + (c[0] ? 'ok' : 'bad') + '">' + (c[0] ? '✔' : '✘') + '</span> ' + c[1] + '</li>').join('');
+      const pass = checks.every(c => c[0]);
+      verdict.innerHTML = '<div class="verdict ' + (pass ? 'pass' : 'fail') + '">' +
+        (pass ? '✅ ผ่านเงื่อนไขทุกข้อ' : '❌ ยังไม่ผ่านเงื่อนไข') + '</div>';
+    }
+
+    function updatePanel() {
+      renderDimSection();
+      const custom = isCustom();
+      document.getElementById('calc-section').style.display = custom ? 'block' : 'none';
+      document.getElementById('poly-note').style.display = isRegular() ? 'block' : 'none';
+      document.getElementById('cond-section').style.display = custom ? 'block' : 'none';
+      updateSteps();
+      updateCondition();
+    }
+
     function onWindowResize() {
+      layoutCanvas();
       const container = document.getElementById('canvas-container');
-      camera.aspect = container.clientWidth / container.clientHeight;
+      const w = container.clientWidth, h = container.clientHeight;
+      if (w < 20 || h < 20) return;   // พื้นที่เล็กเกินไป ข้ามไปก่อน
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setSize(w, h);
+      fitCamera();
     }
 
     function animate() {
        requestAnimationFrame(animate);
-       
+
        animProgress += (targetProgress - animProgress) * 0.05;
-       
+
        const totalWidth = currentWidths.reduce((a, b) => a + b, 0);
-       prismGroup.position.x = -(currentWidths[0]/2 + (totalWidth/2 - currentWidths[0]/2) * (1 - animProgress));
-       
-       const foldAngle = (Math.PI * 2) / currentSides;
-       for(let i=1; i<latFaces.length; i++) {
-           latFaces[i].rotation.y = foldAngle * animProgress;
+       prismGroup.position.x = -(currentWidths[0] / 2 + (totalWidth / 2 - currentWidths[0] / 2) * (1 - animProgress));
+
+       for (let i = 1; i < latFaces.length; i++) {
+           latFaces[i].rotation.y = extAngles[i] * animProgress;
        }
-       
+
        topBaseMesh.rotation.x = -(Math.PI / 2) * animProgress;
        bottomBaseMesh.rotation.x = Math.PI + (Math.PI / 2) * animProgress;
-       
+
+       // แสดงป้ายความยาวเมื่อคลี่เกือบสุดแล้ว
+       const labelsOn = showLabels && animProgress < 0.15;
+       for (const lb of netLabels) lb.visible = labelsOn;
+       if (perimeterLabel) perimeterLabel.visible = labelsOn && showPerimeter;
+
        controls.update();
        renderer.render(scene, camera);
     }
